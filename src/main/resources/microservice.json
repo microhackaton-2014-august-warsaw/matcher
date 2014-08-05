@@ -2,7 +2,7 @@
     "pl": {
         "this": "pl/microhackaton/matcher",
         "dependencies": {
-            //todo "twitterCollector": "pl/microhackaton/twitter-collector"
+            "twitterCollector": "pl/microhackaton/twitter-collector"
         }
     }
 }
