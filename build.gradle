@@ -28,7 +28,7 @@ uploadArchives {
             authentication(userName: 'deployment', password: 'deployment123')
         }
         pom.version = "${currentVersion}"
-        pom.artifactId = "user-data-holder"
+        pom.artifactId = "matcher"
         pom.groupId = "pl.microhackaton"
     }
 }

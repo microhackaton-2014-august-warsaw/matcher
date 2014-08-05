@@ -1,8 +1,8 @@
 {
     "pl": {
-        "this": "pl/microhackaton/user-data-holder",
+        "this": "pl/microhackaton/matcher",
         "dependencies": {
-
+            //todo "twitterCollector": "pl/microhackaton/twitter-collector"
         }
     }
 }
