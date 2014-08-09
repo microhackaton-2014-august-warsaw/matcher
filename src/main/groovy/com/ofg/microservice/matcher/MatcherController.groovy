@@ -27,7 +27,7 @@ class MatcherController {
             "twitterCollector" : {UserLink it ->it.twitter},
             "githubCollector" : {UserLink it -> it.github},
             "googlePlusCollector" : {UserLink it -> it.googleplus},
-            "blogCollector" : {UserLink it -> URLEncoder.encode(it.rss, "UTF-8")}
+            "blogCollector" : {UserLink it -> it.rss}
     ]
 
     @Autowired

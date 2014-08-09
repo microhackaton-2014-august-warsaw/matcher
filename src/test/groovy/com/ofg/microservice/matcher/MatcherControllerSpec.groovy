@@ -20,7 +20,7 @@ class MatcherControllerSpec extends MicroserviceMvcWiremockSpec {
               "googleplus": "tnurkiewicz",
               "name": "tnurkiewicz",
               "github": "tnurkiewicz",
-              "rss": "http://tnurkiewicz.pl"
+              "rss": "tnurkiewicz.pl"
             },
             "peasant" : {
               "id": "erebtowski",
@@ -29,7 +29,7 @@ class MatcherControllerSpec extends MicroserviceMvcWiremockSpec {
               "googleplus": "erebtowski",
               "name": "erebtowski",
               "github": "erebtowski",
-              "rss": "http://erbetowski.pl"
+              "rss": "erbetowski.pl"
             },
             "pairId" : 1
         }
@@ -43,11 +43,12 @@ class MatcherControllerSpec extends MicroserviceMvcWiremockSpec {
                                      "/githubCollector/erebtowski/1",
                                      "/githubCollector/tnurkiewicz/1",
                                      "/googlePlusCollector/erebtowski/1",
-                                     "/googlePlusCollector/tnurkiewicz/1"
-//                                     ,"/blogCollector/erebtowski/1",
-//                                     "/blogCollector/tnurkiewicz/1"
+                                     "/googlePlusCollector/tnurkiewicz/1",
+                                     "/blogCollector/" + URLEncoder.encode("erbetowski.pl", "UTF-8") + "/1",
+                                     "/blogCollector/" + URLEncoder.encode("tnurkiewicz.pl", "UTF-8") + "/1"
             ]
             collectorsRespondsOk(services)
+
             //mockMvc.configureFor("localhost", 8888)
         when:
 
@@ -57,11 +58,6 @@ class MatcherControllerSpec extends MicroserviceMvcWiremockSpec {
             services.each {
                 wireMock.verifyThat(putRequestedFor(urlEqualTo(it)))
             }
-//            wireMock.verifyThat(putRequestedFor(urlEqualTo("/twitterCollector/erebtowski/1")))
-//            wireMock.verifyThat(putRequestedFor(urlEqualTo("/twitterCollector/tnurkiewicz/1")))
-
-//            colaWireMock.verifyThat(putRequestedFor(urlEqualTo("/erebtowski/1")))
-//            colaWireMock.verifyThat(putRequestedFor(urlEqualTo("/erebtowski/1")))
     }
 
     def collectorsRespondsOk(List<String> services) {
