@@ -43,9 +43,7 @@ class MatcherControllerSpec extends MicroserviceMvcWiremockSpec {
                                      "/githubCollector/erebtowski/1",
                                      "/githubCollector/tnurkiewicz/1",
                                      "/googlePlusCollector/erebtowski/1",
-                                     "/googlePlusCollector/tnurkiewicz/1",
-                                     "/blogCollector/" + URLEncoder.encode("erbetowski.pl", "UTF-8") + "/1",
-                                     "/blogCollector/" + URLEncoder.encode("tnurkiewicz.pl", "UTF-8") + "/1"
+                                     "/googlePlusCollector/tnurkiewicz/1"
             ]
             collectorsRespondsOk(services)
 
@@ -58,12 +56,19 @@ class MatcherControllerSpec extends MicroserviceMvcWiremockSpec {
             services.each {
                 wireMock.verifyThat(putRequestedFor(urlEqualTo(it)))
             }
+
+//            ValueMatchingStrategy matchingStrategy = new ValueMatchingStrategy()
+//            matchingStrategy.setContains('{"pairId": "1","rssUrl": "http://tomaszdziurko.pl/feed"}')
+//            matchingStrategy.setJsonCompareMode(JSONCompareMode.LENIENT)
+            //wireMock.verifyThat(putRequestedFor(urlEqualTo('/blogCollector/')))//.withRequestBody(matchingStrategy))
+
     }
 
     def collectorsRespondsOk(List<String> services) {
         services.each {
             stubInteraction(wireMockPut(it), aResponse().withStatus(OK.value()))
         }
+        stubInteraction(wireMockPut('/blogCollector'), aResponse().withStatus(OK.value()))
 
     }
 }

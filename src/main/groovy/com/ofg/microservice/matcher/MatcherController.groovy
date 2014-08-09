@@ -1,12 +1,14 @@
 package com.ofg.microservice.matcher
 import com.ofg.infrastructure.discovery.ServiceResolver
 import com.ofg.infrastructure.web.exception.BadParametersException
+import com.ofg.infrastructure.web.filter.correlationid.CorrelationIdHolder
 import com.ofg.infrastructure.web.resttemplate.RestTemplate
 import groovy.transform.Canonical
 import groovy.transform.TypeChecked
 import groovy.util.logging.Slf4j
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpEntity
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.validation.BindingResult
@@ -26,8 +28,7 @@ class MatcherController {
     private Map<String, Closure> dependencies = [
             "twitterCollector" : {UserLink it ->it.twitter},
             "githubCollector" : {UserLink it -> it.github},
-            "googlePlusCollector" : {UserLink it -> it.googleplus},
-            "blogCollector" : {UserLink it -> it.rss}
+            "googlePlusCollector" : {UserLink it -> it.googleplus}
     ]
 
     @Autowired
@@ -44,21 +45,37 @@ class MatcherController {
 
         dependencies.each { Map.Entry<String, Closure> entry ->
             com.google.common.base.Optional<String> optionalUrl = serviceResolver.getUrl(entry.key)
-            if(optionalUrl.isPresent()) {
+            if (optionalUrl.isPresent()) {
                 String url = optionalUrl.get()
                 restTemplate.put("$url/{login}/{pairId}", new HttpEntity<Object>(), entry.value.call(inputData.peasant), inputData.pairId)
                 restTemplate.put("$url/{login}/{pairId}", new HttpEntity<Object>(), entry.value.call(inputData.celebrity), inputData.pairId)
             }
         }
+
+        com.google.common.base.Optional<String> optionalUrl = serviceResolver.getUrl("blogCollector")
+        if (optionalUrl.isPresent()) {
+            String url = optionalUrl.get()
+            HttpHeaders headers = new HttpHeaders()
+            headers.setContentType(MediaType.APPLICATION_JSON)
+            headers.set(CorrelationIdHolder.CORRELATION_ID_HEADER, CorrelationIdHolder.get())
+            restTemplate.put("$url", new HttpEntity<Object>(new DataForBlogCollector(inputData.pairId, inputData.celebrity.rss), headers))
+            restTemplate.put("$url", new HttpEntity<Object>(new DataForBlogCollector(inputData.pairId, inputData.peasant.rss), headers))
+        }
     }
 
 
-private void checkIfResultHasErrors(BindingResult result) {
+    private void checkIfResultHasErrors(BindingResult result) {
         if(result.hasErrors()){
             throw new BadParametersException(result.getAllErrors())
         }
     }
+}
 
+@Canonical
+@TypeChecked
+class DataForBlogCollector {
+    String pairId
+    String rssUrl
 }
 
 @Canonical
