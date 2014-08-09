@@ -1,5 +1,5 @@
-package com.ofg.microservice.config
-
+package com.ofg.microservice
+import com.ofg.infrastructure.environment.EnvironmentSetupVerifier
 import groovy.transform.TypeChecked
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
@@ -16,7 +16,7 @@ class Application {
 
     static void main(String[] args) {
         SpringApplication application = new SpringApplication(Application)
-        application.addListeners(new EnvironmentSetupVerifier())
+        application.addListeners(new EnvironmentSetupVerifier(Profiles.all()))
         application.run(args)
     }
 }

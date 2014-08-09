@@ -1,8 +1,11 @@
 {
     "pl": {
-        "this": "payments",
+        "this": "pl/microhackaton/matcher",
         "dependencies": {
-            "trustly": "com/ofg/trustly-adapter"
+            "twitterCollector": "pl/microhackaton/twitter-collector",
+            "githubCollector": "pl/microhackaton/caching-github-collector",
+            "googlePlusCollector": "pl/microhackaton/googlepluscollector",
+            "blogCollector": "pl/microhackaton/blog-collector"
         }
     }
 }

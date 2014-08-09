@@ -1,50 +1,59 @@
 buildscript {
     repositories {
         mavenLocal()
-        maven { url "http://repo.spring.io/libs-snapshot" }
         mavenCentral()
         jcenter()
+        maven { url "http://repo.spring.io/libs-snapshot" }
     }
     dependencies {
-        classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.1.3.RELEASE'
-        classpath 'com.ofg:uptodate-gradle-plugin:0.0.3'
-        classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:0.6.0'
+        classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.1.4.RELEASE'
+        classpath 'com.ofg:uptodate-gradle-plugin:0.0.5'
+        if(project.hasProperty("coverage")) { classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:1.0.2' }
     }
 }
 
 apply plugin: 'groovy'
 apply plugin: 'spring-boot'
 apply plugin: 'maven'
-apply plugin: 'sonar-runner'
 apply plugin: 'uptodate'
 
-ext.versionPrefix = "CD"
-ext.buildNrLoc = project.hasProperty('buildNr') ? "${buildNr}" : "000"
-ext.currentVersion = "${versionPrefix}-${buildNrLoc}"
+ext {
+    versionPrefix = "CD"
+    buildNrLoc = project.hasProperty('buildNr') ? "${buildNr}" : "000"
+    currentVersion = "${versionPrefix}-${buildNrLoc}"
+    artifactGroupId = "pl.microhackaton"
+    serverPort = 8089
+
+    groovyVersion = '2.3.6'
+    spockVersion = '0.7-groovy-2.0'
+    springBootVersion = '1.1.4.RELEASE'
+    springVersion = '4.0.6.RELEASE'
+    jacksonMapper = '1.9.13'
+    aspectjVersion = '1.8.1'
+    microDepsSpringVersion = '0.2.0'
+
+    stubRepositoryUrl = 'http://nexus.microhackathon.pl/content/groups/public/'
+    zookeeperPort = 2181
+    zookeeperMockPort = 18081
+}
 
 uploadArchives {
     repositories.mavenDeployer {
         repository(url: "http://nexus.microhackathon.pl/content/repositories/releases/") {
             authentication(userName: 'deployment', password: 'deployment123')
         }
-        pom.version = "${currentVersion}"
-        pom.artifactId = "matcher"
+        pom.version = currentVersion
+        pom.artifactId = project.name
         pom.groupId = "pl.microhackaton"
     }
 }
 
-ext {
-    groovyVersion = '2.3.3'
-    spockVersion = '0.7-groovy-2.0'
-    springBootVersion = '1.1.3.RELEASE'
-    jacksonMapper = '1.9.13'
-    aspectjVersion = '1.8.1'
-    microDepsVersion = '0.3.1'
-    hibernateVersion = '4.3.1.Final'
 
-    stubRepositoryUrl = '' //TODO: fill this in
-    zookeeperPort = 2181
-    zookeeperMockPort = 18081
+task deployToAws(dependsOn: uploadArchives) << {
+    String json = """{"artifactId": "${project.name}", "groupId": "$artifactGroupId","version": "$currentVersion",
+                     "jvmParams": "-Dspring.profiles.active=prod -Dserver.port=$serverPort -Dservice.resolver.url=zookeeper.microhackathon.pl:2181"}"""
+    println "Sending the following json [$json]"
+    new groovyx.net.http.HTTPBuilder('http://54.73.40.79:18081/deploy').post([body: json, headers: ['Content-Type': 'application/json']])
 }
 
 task addHashFile << {
@@ -56,8 +65,6 @@ task addHashFile << {
 
 jar {
     dependsOn addHashFile
-    baseName = '' //TODO: fill this in
-    version =  '0.1.0'
     from "commitHash.txt"
 }
 
@@ -65,12 +72,18 @@ run {
     systemProperties = System.properties
 }
 
+//Workaround for the issue with Java 8u11 and 7u65 - http://www.infoq.com/news/2014/08/Java8-U11-Broke-Tools
+test {
+    jvmArgs '-noverify'
+}
+applicationDefaultJvmArgs = [ "-noverify" ]
+
 repositories {
     mavenLocal()
-    maven { url 'http://repository.codehaus.org' }
-    maven { url 'http://repo.spring.io/milestone' }
     mavenCentral()
     jcenter()
+    maven { url 'http://repository.codehaus.org' }
+    maven { url 'http://repo.spring.io/milestone' }
 }
 
 configurations {
@@ -78,11 +91,13 @@ configurations {
 }
 
 dependencies {
+    compile "org.springframework:spring-context-support:$springVersion"
+    compile 'org.apache.httpcomponents:httpclient:4.3.4'
+    compile 'net.sf.ehcache:ehcache:2.8.3'
     compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
     compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
-    compile "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
     compile "org.codehaus.groovy:groovy-all:$groovyVersion:indy"
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.4.1.1'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.4.1.3'
     compile "org.codehaus.jackson:jackson-mapper-asl:$jacksonMapper"
     compile "org.codehaus.jackson:jackson-core-asl:$jacksonMapper"
     compile 'com.google.guava:guava:17.0'
@@ -91,18 +106,16 @@ dependencies {
     compile 'com.jayway.jsonpath:json-path-assert:0.9.1'
     compile 'org.yaml:snakeyaml:1.13'
     compile 'javax.validation:validation-api:1.1.0.Final'
-    compile 'org.hibernate:hibernate-validator:5.1.1.Final'
-    compile "org.hibernate:hibernate-core:$hibernateVersion"
-    compile "org.hibernate:hibernate-entitymanager:$hibernateVersion"
+    compile 'org.hibernate:hibernate-validator:5.1.2.Final'
     compile "org.aspectj:aspectjrt:$aspectjVersion"
-    compile("com.ofg:micro-deps-spring-config:0.0.2") {
+    compile 'org.apache.ivy:ivy:2.3.0'
+    compile "com.mangofactory:swagger-springmvc:0.8.4"
+    // microservices
+    compile("com.ofg:micro-deps-spring-config:$microDepsSpringVersion") {
         exclude group: 'org.slf4j'
         exclude group: 'log4j'
     }
-    compile 'org.apache.ivy:ivy:2.3.0'
-    compile "com.mangofactory:swagger-springmvc:0.8.4"
-
-    compile 'com.h2database:h2:1.4.179'
+    compile 'com.ofg:micro-infra-spring:0.0.1'
 
     runtime "cglib:cglib-nodep:3.1"
     runtime "org.objenesis:objenesis:2.1" // allows mocking of classes without default constructor (together with CGLIB)
@@ -116,10 +129,11 @@ dependencies {
     testRuntime("org.spockframework:spock-spring:$spockVersion") {
         exclude group: 'org.spockframework', module: 'spock-core'
     }
-    testCompile 'org.springframework:spring-test:4.0.5.RELEASE'
-    testCompile 'com.github.tomakehurst:wiremock:1.46'
+    testCompile "org.springframework:spring-test:$springVersion"
+    testCompile 'com.github.tomakehurst:wiremock:1.47'
+    testCompile "com.ofg:micro-deps-spring-test-config:$microDepsSpringVersion"
 
-    mockDependencies 'com.ofg:micro-deps:0.3.1:fatJar'
+    mockDependencies 'com.ofg:micro-deps:0.5.0:fatJar'
 }
 
 tasks.withType(GroovyCompile) {
@@ -134,7 +148,7 @@ if(project.hasProperty("coverage")) {
     apply plugin: 'codenarc'
     apply plugin: 'jacoco'
     apply plugin: 'sonar-runner'
-    apply plugin: 'coveralls'
+    apply plugin: 'com.github.kt3k.coveralls'
 
     jacoco {
         toolVersion = "0.7.0.201403182114"
@@ -155,11 +169,11 @@ if(project.hasProperty("coverage")) {
         reportFormat = 'xml'
         ignoreFailures = true
     }
-    
+
     dependencies {
         codenarc 'org.codenarc:CodeNarc:0.21'
     }
-    
+
     test {
         ignoreFailures = true
         jacoco {
@@ -186,9 +200,4 @@ task runMocks << {
 
 task stopMocks << {
     "http://localhost:$zookeeperMockPort/stop".toURL().readLines()
-}
-
-test {
-    //Workaround for the issue with Java 8u11 and 7u65 - http://www.infoq.com/news/2014/08/Java8-U11-Broke-Tools
-    jvmArgs '-noverify'
 }
