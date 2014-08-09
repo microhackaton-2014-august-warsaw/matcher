@@ -66,7 +66,7 @@ private void checkIfResultHasErrors(BindingResult result) {
 class InputData {
     UserLink celebrity
     UserLink peasant
-    Long pairId
+    String pairId
 }
 
 @Canonical
