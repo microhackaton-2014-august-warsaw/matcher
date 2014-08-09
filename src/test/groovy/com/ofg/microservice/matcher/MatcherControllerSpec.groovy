@@ -52,7 +52,7 @@ class MatcherControllerSpec extends MicroserviceMvcWiremockSpec {
             //mockMvc.configureFor("localhost", 8888)
         when:
 
-            mockMvc.perform(post('/match').accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON).content(correctMatchJson))
+            mockMvc.perform(post('/match').contentType(MediaType.APPLICATION_JSON).content(correctMatchJson))
                     .andExpect(status().isOk())
         then:
             services.each {

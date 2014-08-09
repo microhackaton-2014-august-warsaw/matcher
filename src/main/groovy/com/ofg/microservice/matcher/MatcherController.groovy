@@ -36,10 +36,10 @@ class MatcherController {
         this.restTemplate = restTemplate
     }
 
-    @RequestMapping(value = "/match", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/match", consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(value = HttpStatus.OK)
     //@ApiOperation(value = "Async call with CorrelationID", notes = "This will asynchronously call the server, proving that correlation id works in that case")
-    String callReturnigCorrelationIdAndUsingItInAsync(@RequestBody InputData inputData, BindingResult result) {
+    void callReturnigCorrelationIdAndUsingItInAsync(@RequestBody InputData inputData, BindingResult result) {
         checkIfResultHasErrors(result)
 
         dependencies.each { Map.Entry<String, Closure> entry ->
@@ -50,15 +50,6 @@ class MatcherController {
                 restTemplate.put("$url/{login}/{pairId}", new HttpEntity<Object>(), entry.value.call(inputData.celebrity), inputData.pairId)
             }
         }
-//        String twitterCollectorUrl = serviceResolver.getUrl('twitterCollector').get()
-//        restTemplate.put("$twitterCollectorUrl/{login}/{pairId}", new HttpEntity<Object>(), inputData.peasant.twitter , inputData.pairId )
-//        restTemplate.put("$twitterCollectorUrl/{login}/{pairId}", new HttpEntity<Object>(), inputData.celebrity.twitter , inputData.pairId )
-//
-//        String cachingGithubCollectorUrl = serviceResolver.getUrl('githubCollector').get()
-//        restTemplate.put("$cachingGithubCollectorUrl/{login}/{pairId}", new HttpEntity<Object>(), inputData.peasant.github , inputData.pairId )
-//        restTemplate.put("$cachingGithubCollectorUrl/{login}/{pairId}", new HttpEntity<Object>(), inputData.celebrity.github , inputData.pairId )
-
-        return "dupa"
     }
 
 
